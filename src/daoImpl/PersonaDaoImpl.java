@@ -79,7 +79,7 @@ public class PersonaDaoImpl implements PersonaDao
 		return isSuccess;
 	}
 	
-	public boolean delete(Persona persona)
+	public boolean delete(String dni)
 	{
 		PreparedStatement statement;
 		Connection conexion = Conexion.getConexion().getSQLConexion();
@@ -87,7 +87,7 @@ public class PersonaDaoImpl implements PersonaDao
 		try 
 		{
 			statement = conexion.prepareStatement(delete);
-			statement.setString(1, persona.getDni());
+			statement.setString(1, dni);
 			if(statement.executeUpdate() > 0)
 			{
 				conexion.commit();
