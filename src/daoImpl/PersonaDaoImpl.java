@@ -16,8 +16,9 @@ public class PersonaDaoImpl implements PersonaDao
 	private static final String delete = "DELETE FROM Personas WHERE Dni = ?";
 	private static final String update = "update Personas set Dni = ?, Nombre = ?, Apellido = ? where Dni = ?";
 	private static final String readall = "SELECT * FROM Personas";
-		
-	public boolean post(Persona usuario)
+	private static final String get = "SELECT * FROM Personas where Dni = ?";
+	
+	public boolean post(Persona persona)
 	{
 		PreparedStatement statement;
 		Connection conexion = Conexion.getConexion().getSQLConexion();
@@ -25,9 +26,9 @@ public class PersonaDaoImpl implements PersonaDao
 		try
 		{
 			statement = conexion.prepareStatement(insert);
-			statement.setString(1, usuario.getDni());
-			statement.setString(2, usuario.getNombre());
-			statement.setString(3, usuario.getApellido());
+			statement.setString(1, persona.getDni());
+			statement.setString(2, persona.getNombre());
+			statement.setString(3, persona.getApellido());
 			if(statement.executeUpdate() > 0)
 			{
 				conexion.commit();
@@ -47,7 +48,7 @@ public class PersonaDaoImpl implements PersonaDao
 		return isSuccess;
 	}
 	
-	public boolean update(Persona usuario)
+	public boolean update(Persona persona)
 	{
 		PreparedStatement statement;
 		Connection conexion = Conexion.getConexion().getSQLConexion();
@@ -55,10 +56,10 @@ public class PersonaDaoImpl implements PersonaDao
 		try
 		{
 			statement = conexion.prepareStatement(update);
-			statement.setString(1, usuario.getDni());
-			statement.setString(4, usuario.getDni());
-			statement.setString(2, usuario.getNombre());
-			statement.setString(3, usuario.getApellido());
+			statement.setString(1, persona.getDni());
+			statement.setString(4, persona.getDni());
+			statement.setString(2, persona.getNombre());
+			statement.setString(3, persona.getApellido());
 			if(statement.executeUpdate() > 0)
 			{
 				conexion.commit();
@@ -78,7 +79,7 @@ public class PersonaDaoImpl implements PersonaDao
 		return isSuccess;
 	}
 	
-	public boolean delete(Persona usuario)
+	public boolean delete(Persona persona)
 	{
 		PreparedStatement statement;
 		Connection conexion = Conexion.getConexion().getSQLConexion();
@@ -86,7 +87,7 @@ public class PersonaDaoImpl implements PersonaDao
 		try 
 		{
 			statement = conexion.prepareStatement(delete);
-			statement.setString(1, usuario.getDni());
+			statement.setString(1, persona.getDni());
 			if(statement.executeUpdate() > 0)
 			{
 				conexion.commit();
@@ -104,7 +105,7 @@ public class PersonaDaoImpl implements PersonaDao
 	{
 		PreparedStatement statement;
 		ResultSet resultSet; 
-		ArrayList<Persona> usuarios = new ArrayList<Persona>();
+		ArrayList<Persona> personas = new ArrayList<Persona>();
 		Conexion conexion = Conexion.getConexion();
 		try 
 		{
@@ -112,21 +113,43 @@ public class PersonaDaoImpl implements PersonaDao
 			resultSet = statement.executeQuery();
 			while(resultSet.next())
 			{
-				usuarios.add(mapResultUsuario(resultSet));
+				personas.add(mapResultpersona(resultSet));
 			}
 		} 
 		catch (SQLException e) 
 		{
 			e.printStackTrace();
 		}
-		return usuarios;
+		return personas;
 	}
 	
-	private Persona mapResultUsuario(ResultSet resultSet) throws SQLException
+	public Persona get(String dni) {
+		PreparedStatement statement;
+		ResultSet resultSet; 
+		Persona persona = null;
+		Conexion conexion = Conexion.getConexion();
+		try 
+		{
+			statement = conexion.getSQLConexion().prepareStatement(get);
+			statement.setString(1, dni);
+			resultSet = statement.executeQuery();
+			while(resultSet.next())
+			{
+				persona = mapResultpersona(resultSet);
+			}
+		} 
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		return persona;
+	}
+	
+	private Persona mapResultpersona(ResultSet resultSet) throws SQLException
 	{
-		String id = resultSet.getString("idusuario");
+		String id = resultSet.getString("Dni");
 		String nombre = resultSet.getString("Nombre");
-		String tel = resultSet.getString("Telefono");
-		return new Persona(id, nombre, tel);
+		String apellido = resultSet.getString("Apellido");
+		return new Persona(id, nombre, apellido);
 	}
 }
