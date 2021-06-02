@@ -7,8 +7,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import entidades.Persona;
 import negocio.PersonaNegocio;
@@ -27,6 +28,7 @@ public class PersonasController {
 	private PanelPersonaModificar pnlPersonasModificar;
 	private PanelPersonaListar pnlPersonasListar;
 	private PersonaNegocio negocioPersona;
+	private List<Persona> personasEnTabla;
 	
 	public PersonasController(VentanaPrincipal ventanaPrincipal, PersonaNegocio negocioPersona)
 	{
@@ -34,24 +36,30 @@ public class PersonasController {
 		this.ventanaPrincipal = ventanaPrincipal;
 		this.negocioPersona = negocioPersona;
 		
-		//Instancio los paneles
 		this.pnlPersonasAgregar = new PanelPersonaAgregar();
 		this.pnlPersonasEliminar = new PanelPersonaEliminar();
 		this.pnlPersonasModificar = new PanelPersonaModificar();
 		this.pnlPersonasListar = new PanelPersonaListar();
 		
 		//Enlazo todos los eventos
-		
 		//Eventos menu del Frame principal llamado Ventana
-		this.ventanaPrincipal.getMenuAgregar().addActionListener(a->EventoClickMenu_AbrirPanel(a, pnlPersonasAgregar));
-		this.ventanaPrincipal.getMenuEliminar().addActionListener(a->EventoClickMenu_AbrirPanel(a, pnlPersonasEliminar));
-		this.ventanaPrincipal.getMenuModificar().addActionListener(a->EventoClickMenu_AbrirPanel(a, pnlPersonasModificar));
-		this.ventanaPrincipal.getMenuListar().addActionListener(a->EventoClickMenu_AbrirPanel(a, pnlPersonasListar));
+		this.ventanaPrincipal.getMenuAgregar().addActionListener(a->eventoClickMenu_AbrirPanel(a, pnlPersonasAgregar));
+		this.ventanaPrincipal.getMenuEliminar().addActionListener(a->{
+				refrescarTabla(); 
+				eventoClickMenu_AbrirPanel(a, pnlPersonasEliminar);}
+		);
+		this.ventanaPrincipal.getMenuModificar().addActionListener(a->{
+			refrescarTabla(); 
+			eventoClickMenu_AbrirPanel(a, pnlPersonasModificar);
+		});
+		this.ventanaPrincipal.getMenuListar().addActionListener(a->{
+			refrescarTabla(); 
+			eventoClickMenu_AbrirPanel(a, pnlPersonasListar);
+		});
 		
-		PersonasAgregarInicializar();
-		PersonasListarInicializar();
-		PersonasModificarInicializar();
-		PersonasEliminarInicializar();
+		personasAgregarInicializar();
+		personasModificarInicializar();
+		personasEliminarInicializar();
 	}
 	
 	public void inicializar()
@@ -59,7 +67,15 @@ public class PersonasController {
 		this.ventanaPrincipal.setVisible(true);;
 	}
 	
-	private void PersonasAgregarInicializar()
+	private void refrescarTabla()
+	{
+		this.personasEnTabla = (ArrayList<Persona>) negocioPersona.get();
+		this.pnlPersonasEliminar.fillModel(this.personasEnTabla);
+		this.pnlPersonasListar.fillModel(this.personasEnTabla);
+		this.pnlPersonasModificar.fillModel(this.personasEnTabla);
+	}
+	
+	private void personasAgregarInicializar()
 	{
 		 JTextField txtNombre = this.pnlPersonasAgregar.getTxtNombre();
 	     JTextField textApellido = this.pnlPersonasAgregar.getTxtApellido();
@@ -67,7 +83,7 @@ public class PersonasController {
 	     txtNombre.addKeyListener(new KeyAdapterCaracteres(txtNombre));
 	     textApellido.addKeyListener(new KeyAdapterCaracteres(textApellido));
 	      
-		 this.pnlPersonasAgregar.getBtnAceptar().addActionListener(a->Agregar());
+		 this.pnlPersonasAgregar.getBtnAceptar().addActionListener(a->agregar());
 		 this.pnlPersonasAgregar.getTxtDni().addKeyListener(new KeyAdapter() {
 				public void keyPressed(KeyEvent ke) {
 					JTextField text = pnlPersonasAgregar.getTxtDni();
@@ -77,28 +93,19 @@ public class PersonasController {
 		      });
 	}
 	
-	private void PersonasEliminarInicializar()
+	private void personasEliminarInicializar()
 	{
-		 //List<Persona> lista = negocioPersona.get();
-
-		 //JList<Persona> jListaPersonas = new JList<Persona>();
-		 //for(Persona persona : lista)  lista.add(persona);
-		 
-		// this.pnlPersonasEliminar.setListaPersonas(jListaPersonas);
+		this.pnlPersonasEliminar.getBtnEliminar().addActionListener(a->eliminar());
 	}
 	
-	private void PersonasModificarInicializar()
+	private void personasModificarInicializar()
 	{
-		 
-	}
-	
-	private void PersonasListarInicializar()
-	{
-		 
+		this.pnlPersonasModificar.getListaPersonas().addListSelectionListener(a -> seleccionarModificar());
+		this.pnlPersonasModificar.getBtnModificar().addActionListener(a -> modificar());
 	}
 	
 	//EventoClickMenu abrir Panel
-	public void  EventoClickMenu_AbrirPanel(ActionEvent a, JPanel panel)
+	public void  eventoClickMenu_AbrirPanel(ActionEvent a, JPanel panel)
 	{		
 		ventanaPrincipal.getContentPane().removeAll();
 		ventanaPrincipal.getContentPane().add(panel);
@@ -106,7 +113,35 @@ public class PersonasController {
 		ventanaPrincipal.getContentPane().revalidate();
 	}
 	
-	private void Agregar() {
+	private void eliminar() {
+		try
+		{
+
+			int filaSeleccionada = this.pnlPersonasEliminar.getListaPersonas().getSelectedIndex();
+			negocioPersona.delete(this.personasEnTabla.get(filaSeleccionada).dni);
+			this.refrescarTabla();
+			mostrarMensaje("El registro se elimino correctamente.");
+		}
+		catch(PersonaException ex)
+		{
+			mostrarMensajeError(ex.getMessage());
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+			mostrarMensajeError(ex.toString());
+		}
+	}
+	
+	private void seleccionarModificar() {
+		
+	}
+	
+	private void modificar() {
+		
+	}
+	
+	private void agregar() {
 		try
 		{
 			String nombre = pnlPersonasAgregar.getTxtNombre().getText();
@@ -115,20 +150,34 @@ public class PersonasController {
 			
 			Persona personaAAgregar = new Persona(dni, nombre, apellido);
 			negocioPersona.post(personaAAgregar);
-			JLabel label = new JLabel("El registro se agrego correctamente.");
-			JOptionPane.showMessageDialog(null,label);
+			
+			pnlPersonasAgregar.getTxtNombre().setText("");
+			pnlPersonasAgregar.getTxtApellido().setText("");
+			pnlPersonasAgregar.getTxtDni().setText("");
+			mostrarMensaje("El registro se agrego correctamente.");
+			
 		}
 		catch(PersonaException ex)
 		{
-			JLabel label = new JLabel(ex.getMessage());
-			JOptionPane.showMessageDialog(null,label,"ERROR",JOptionPane.ERROR_MESSAGE);
+			mostrarMensajeError(ex.getMessage());
 		}
 		catch(Exception ex)
 		{
 			ex.printStackTrace();
-			JLabel label = new JLabel(ex.toString());
-			JOptionPane.showMessageDialog(null,label,"ERROR",JOptionPane.ERROR_MESSAGE);
+			mostrarMensajeError(ex.toString());
 		}
+	}
+	
+	private void mostrarMensaje(String mensaje)
+	{
+		JLabel label = new JLabel(mensaje);
+		JOptionPane.showMessageDialog(null,label);
+	}
+	
+	private void mostrarMensajeError(String mensaje)
+	{
+		JLabel label = new JLabel(mensaje);
+		JOptionPane.showMessageDialog(null,label,"ERROR",JOptionPane.ERROR_MESSAGE);
 	}
 	
 	private class KeyAdapterCaracteres extends KeyAdapter{
