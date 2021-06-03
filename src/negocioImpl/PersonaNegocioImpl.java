@@ -52,6 +52,9 @@ public class PersonaNegocioImpl implements PersonaNegocio{
 		else {
 			if(persona.getApellido().isEmpty() )
 				validaciones += "Se debe completar el campo apellido.";
+			else if (personasDao.get(persona.getDni()) == null)
+				validaciones += "No se encontro el registro de persona que se desea eliminar.";
+				
 			if(persona.getNombre().isEmpty() )
 				validaciones += "Se debe completar el campo nombre.";
 		}

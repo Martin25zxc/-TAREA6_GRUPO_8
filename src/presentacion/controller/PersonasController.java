@@ -116,11 +116,17 @@ public class PersonasController {
 	private void eliminar() {
 		try
 		{
-
 			int filaSeleccionada = this.pnlPersonasEliminar.getListaPersonas().getSelectedIndex();
-			negocioPersona.delete(this.personasEnTabla.get(filaSeleccionada).dni);
-			this.refrescarTabla();
-			mostrarMensaje("El registro se elimino correctamente.");
+			if(filaSeleccionada != -1)
+			{
+				negocioPersona.delete(this.personasEnTabla.get(filaSeleccionada).dni);
+				this.refrescarTabla();
+				mostrarMensaje("El registro se elimino correctamente.");
+			}
+			else
+			{
+				mostrarMensajeError("No se encuentra seleccionado ningun registro.");
+			}
 		}
 		catch(PersonaException ex)
 		{
@@ -134,19 +140,58 @@ public class PersonasController {
 	}
 	
 	private void seleccionarModificar() {
-		
+		try
+		{
+			int filaSeleccionada = this.pnlPersonasModificar.getListaPersonas().getSelectedIndex();
+			if(filaSeleccionada != -1)
+			{
+				Persona p = this.personasEnTabla.get(filaSeleccionada);
+				pnlPersonasModificar.getTxtNombre().setText(p.getNombre());
+				pnlPersonasModificar.getTxtApellido().setText(p.getApellido());
+				pnlPersonasModificar.getTxtDni().setText(p.getDni());
+			}
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+			mostrarMensajeError(ex.toString());
+		}
 	}
 	
 	private void modificar() {
-		
+		try
+		{
+			String nombre = pnlPersonasModificar.getTxtNombre().getText().trim();
+			String apellido = pnlPersonasModificar.getTxtApellido().getText().trim();
+			String dni = pnlPersonasModificar.getTxtDni().getText().trim();
+			
+			Persona personaAAgregar = new Persona(dni, nombre, apellido);
+			negocioPersona.update(personaAAgregar);
+			
+			pnlPersonasModificar.getTxtNombre().setText("");
+			pnlPersonasModificar.getTxtApellido().setText("");
+			pnlPersonasModificar.getTxtDni().setText("");
+			mostrarMensaje("El registro se modifico correctamente.");
+			this.pnlPersonasModificar.getListaPersonas().clearSelection();
+			this.refrescarTabla();
+		}
+		catch(PersonaException ex)
+		{
+			mostrarMensajeError(ex.getMessage());
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+			mostrarMensajeError(ex.toString());
+		}
 	}
 	
 	private void agregar() {
 		try
 		{
-			String nombre = pnlPersonasAgregar.getTxtNombre().getText();
-			String apellido = pnlPersonasAgregar.getTxtApellido().getText();
-			String dni = pnlPersonasAgregar.getTxtDni().getText();
+			String nombre = pnlPersonasAgregar.getTxtNombre().getText().trim();
+			String apellido = pnlPersonasAgregar.getTxtApellido().getText().trim();
+			String dni = pnlPersonasAgregar.getTxtDni().getText().trim();
 			
 			Persona personaAAgregar = new Persona(dni, nombre, apellido);
 			negocioPersona.post(personaAAgregar);
